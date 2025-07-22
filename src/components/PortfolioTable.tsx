@@ -1,7 +1,11 @@
+"use client";
+
 import { useState } from "react";
 import { PortfolioHolding } from "@/types/portfolio";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import {
   ArrowUp,
   ArrowDown,
@@ -22,6 +26,8 @@ import {
 interface PortfolioTableProps {
   holdings: PortfolioHolding[];
   isUpdating: boolean;
+  isDynamicDataLoading?: boolean;
+  hasDynamicData?: boolean;
 }
 
 type SortField =
@@ -34,12 +40,15 @@ type SortField =
   | "presentValue"
   | "gainLoss"
   | "gainLossPercentage"
-  | "peRatio";
+  | "peRatio"
+  | "latestEarnings";
 type SortDirection = "asc" | "desc";
 
 export const PortfolioTable = ({
   holdings,
   isUpdating,
+  isDynamicDataLoading = false,
+  hasDynamicData = false,
 }: PortfolioTableProps) => {
   const [sortField, setSortField] = useState<SortField>("presentValue");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -54,6 +63,13 @@ export const PortfolioTable = ({
   };
 
   const sortedHoldings = [...holdings].sort((a, b) => {
+    // if sorting by "latestEarnings", compare by amount
+    if (sortField === "latestEarnings") {
+      const aAmount = a.latestEarnings?.amount ?? 0;
+      const bAmount = b.latestEarnings?.amount ?? 0;
+      return sortDirection === "asc" ? aAmount - bAmount : bAmount - aAmount;
+    }
+
     const aValue = a[sortField];
     const bValue = b[sortField];
 
@@ -96,6 +112,14 @@ export const PortfolioTable = ({
     </TableHead>
   );
 
+  const renderSkeleton = (width: string = "w-16") => (
+    <Skeleton className={cn("h-4", width)} />
+  );
+
+  const hasDynamicDataForHolding = (holding: PortfolioHolding) => {
+    return hasDynamicData && holding.currentPrice > 0;
+  };
+
   return (
     <Card className="bg-card border-border shadow-card w-full">
       <CardContent>
@@ -112,18 +136,22 @@ export const PortfolioTable = ({
                 <SortableHeader field="portfolioPercentage">
                   Portfolio %
                 </SortableHeader>
-                <TableHead>Exchange</TableHead> {/* Exchange is not sortable */}
+                <TableHead>Exchange</TableHead>
                 <SortableHeader field="currentPrice">CMP</SortableHeader>
                 <SortableHeader field="presentValue">
                   Present Value
                 </SortableHeader>
                 <SortableHeader field="gainLoss">Gain/Loss</SortableHeader>
                 <SortableHeader field="peRatio">P/E Ratio</SortableHeader>
+                <SortableHeader field="latestEarnings">
+                  Latest Earnings
+                </SortableHeader>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedHoldings.map((holding) => {
                 const isGain = holding.gainLoss >= 0;
+                const hasDynamic = hasDynamicDataForHolding(holding);
 
                 return (
                   <TableRow
@@ -132,32 +160,52 @@ export const PortfolioTable = ({
                   >
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-foreground">
+                        <div className="font-medium text-foreground">
                           {holding.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {holding.symbol}
-                        </span>
-                        <Badge variant="outline" className="w-fit mt-1 text-xs">
-                          {holding.sector}
-                        </Badge>
+                        </div>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" className="w-fit text-xs">
+                            {holding.symbol || holding.name}
+                          </Badge>
+                          <Badge variant="secondary" className="w-fit text-xs">
+                            {holding.sector}
+                          </Badge>
+                        </div>
                       </div>
                     </TableCell>
 
                     <TableCell className="text-muted-foreground">
-                      {formatCurrency(holding.purchasePrice)}
+                      <AnimatedNumber
+                        value={holding.purchasePrice}
+                        format="currency"
+                      />
                     </TableCell>
 
                     <TableCell className="text-foreground font-medium">
-                      {holding.quantity}
+                      <AnimatedNumber
+                        value={holding.quantity}
+                        format="number"
+                        decimals={0}
+                      />
                     </TableCell>
 
                     <TableCell className="text-foreground font-medium">
-                      {formatCurrency(holding.investment)}
+                      <AnimatedNumber
+                        value={holding.investment}
+                        format="currency"
+                      />
                     </TableCell>
 
                     <TableCell className="text-muted-foreground">
-                      {holding.portfolioPercentage.toFixed(1)}%
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        renderSkeleton("w-12")
+                      ) : (
+                        <AnimatedNumber
+                          value={holding.portfolioPercentage}
+                          format="percentage"
+                          decimals={1}
+                        />
+                      )}
                     </TableCell>
 
                     <TableCell>
@@ -169,40 +217,116 @@ export const PortfolioTable = ({
                     <TableCell
                       className={cn("font-medium transition-all duration-300")}
                     >
-                      <div className="flex items-center gap-1">
-                        {isGain ? (
-                          <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 text-red-600 dark:text-red-400" />
-                        )}
-                        {formatCurrency(holding.currentPrice)}
-                      </div>
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        renderSkeleton("w-16")
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          {hasDynamic &&
+                            (isGain ? (
+                              <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3 text-red-600 dark:text-red-400" />
+                            ))}
+                          <AnimatedNumber
+                            value={holding.currentPrice}
+                            format="currency"
+                          />
+                        </div>
+                      )}
                     </TableCell>
 
                     <TableCell
                       className={cn("font-medium transition-all duration-300")}
                     >
-                      {formatCurrency(holding.presentValue)}
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        renderSkeleton("w-20")
+                      ) : (
+                        <AnimatedNumber
+                          value={holding.presentValue}
+                          format="currency"
+                        />
+                      )}
                     </TableCell>
 
                     <TableCell
                       className={cn(
                         "font-bold transition-all duration-300",
-                        isGain
+                        hasDynamic && isGain
                           ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                          : hasDynamic
+                          ? "text-red-600 dark:text-red-400"
+                          : ""
                       )}
                     >
-                      <div className="flex flex-col">
-                        <span>{formatCurrency(holding.gainLoss)}</span>
-                        <span className="text-xs">
-                          ({formatPercentage(holding.gainLossPercentage)})
-                        </span>
-                      </div>
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        <div className="flex flex-col gap-1">
+                          {renderSkeleton("w-16")}
+                          {renderSkeleton("w-12")}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col">
+                          <span>
+                            <AnimatedNumber
+                              value={holding.gainLoss}
+                              format="currency"
+                            />
+                          </span>
+                          <span className="text-xs">
+                            (
+                            <AnimatedNumber
+                              value={holding.gainLossPercentage}
+                              format="percentage"
+                              decimals={2}
+                            />
+                            )
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
 
                     <TableCell className="text-muted-foreground">
-                      {holding.peRatio}
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        renderSkeleton("w-12")
+                      ) : (
+                        <AnimatedNumber
+                          value={holding.peRatio}
+                          format="decimal"
+                          decimals={2}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isDynamicDataLoading && !hasDynamic ? (
+                        <div className="flex flex-col gap-1">
+                          {renderSkeleton("w-8")}
+                          {renderSkeleton("w-12")}
+                        </div>
+                      ) : (
+                        holding.latestEarnings &&
+                        holding.latestEarnings.period &&
+                        typeof holding.latestEarnings.amount === "number" &&
+                        holding.latestEarnings.amount !== 0 && (
+                          <div className="flex flex-col">
+                            <div className="text-xs">
+                              {holding.latestEarnings.period}
+                            </div>
+                            <div className="text-sm">
+                              {holding.latestEarnings.type === "total" ? (
+                                <AnimatedNumber
+                                  value={holding.latestEarnings.amount}
+                                  format="currency"
+                                />
+                              ) : (
+                                <AnimatedNumber
+                                  value={holding.latestEarnings.amount}
+                                  format="decimal"
+                                  decimals={2}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      )}
                     </TableCell>
                   </TableRow>
                 );

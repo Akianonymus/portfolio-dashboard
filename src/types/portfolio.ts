@@ -1,14 +1,23 @@
-export interface Stock {
+// Portfolio holding data (static data that doesn't change)
+export interface PortfolioHoldingData {
   id: string;
   name: string;
-  symbol: string;
   sector: string;
   purchasePrice: number;
   quantity: number;
-  exchange: "NSE" | "BSE";
+}
+
+// Stock data with real-time information
+export interface Stock extends PortfolioHoldingData {
+  symbol: string;
+  exchange: string;
   currentPrice: number;
   peRatio: number;
-  latestEarnings: string;
+  latestEarnings: {
+    period?: string;
+    amount: number;
+    type?: "per-share" | "total";
+  };
 }
 
 export interface PortfolioHolding extends Stock {
@@ -34,20 +43,4 @@ export interface PortfolioSummary {
   totalGainLoss: number;
   gainLossPercentage: number;
   lastUpdated: Date;
-}
-
-// New interfaces for the enhanced portfolio data
-export interface SectorData {
-  name: string;
-  totalInvestment: number;
-  totalPresentValue: number;
-  totalGainLoss: number;
-  gainLossPercentage: number;
-  portfolioPercentage: number;
-}
-
-export interface PortfolioData {
-  stocks: Stock[];
-  summary: PortfolioSummary;
-  sectors: SectorData[];
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { SectorSummary } from "@/types/portfolio";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,7 +160,7 @@ export const SectorGrouping = ({
 
               <CollapsibleContent>
                 <CardContent className="pt-0">
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     {sector.holdings.map((holding) => {
                       const holdingIsGain = holding.gainLoss >= 0;
 
