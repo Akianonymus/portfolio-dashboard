@@ -74,13 +74,6 @@ export const portfolioApi = {
   },
 };
 
-export class ApiError extends Error {
-  constructor(message: string, public status?: number, public code?: string) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
-
 export const withRetry = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,

@@ -7,8 +7,7 @@ export interface PortfolioHoldingData {
   quantity: number;
 }
 
-// Stock data with real-time information
-export interface Stock extends PortfolioHoldingData {
+export interface PortfolioHolding extends PortfolioHoldingData {
   symbol: string;
   exchange: string;
   currentPrice: number;
@@ -18,9 +17,6 @@ export interface Stock extends PortfolioHoldingData {
     amount: number;
     type?: "per-share" | "total";
   };
-}
-
-export interface PortfolioHolding extends Stock {
   investment: number;
   presentValue: number;
   gainLoss: number;

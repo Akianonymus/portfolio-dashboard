@@ -129,7 +129,7 @@ export async function getStockDataBySymbolGoogle(
     }
 
     if (!periodFound) {
-      console.log(`Period not found with any approach ${symbol} ${exchange}`);
+      // Period not found - this is expected for some stocks
     }
 
     return result;

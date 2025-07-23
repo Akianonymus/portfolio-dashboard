@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "./ui/card";
+import { useState, useEffect } from "react";
 
 interface PortfolioSummaryCardProps {
   summary: PortfolioSummary;
@@ -22,6 +23,26 @@ export const PortfolioSummaryCard = ({
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary?.lastUpdated)
     : null;
+
+  // State for formatted date/time to prevent hydration mismatch
+  const [formattedDateTime, setFormattedDateTime] = useState<string>("");
+
+  // Format date/time only on client side
+  useEffect(() => {
+    if (lastUpdated) {
+      const formatted = `${lastUpdated.toLocaleDateString(
+        "en-IN"
+      )}, ${lastUpdated.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      setFormattedDateTime(formatted);
+    }
+  }, [lastUpdated]);
+
+  // Show loading state when dynamic data is being fetched
+  const showLoading = isDynamicDataLoading || isUpdating;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -55,14 +76,10 @@ export const PortfolioSummaryCard = ({
                 isGain ? "text-green-600" : "text-red-600"
               )}
             >
-              {isDynamicDataLoading ? (
-                <Skeleton className="h-8 w-32" />
-              ) : (
-                <AnimatedNumber
-                  value={summary.totalPresentValue}
-                  format="currency"
-                />
-              )}
+              <AnimatedNumber
+                value={summary.totalPresentValue}
+                format="currency"
+              />
             </div>
           </div>
         </CardContent>
@@ -80,38 +97,29 @@ export const PortfolioSummaryCard = ({
               )}
             </div>
             <div className="flex items-center justify-between gap-4">
-              {isDynamicDataLoading ? (
-                <>
-                  <Skeleton className="h-8 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </>
-              ) : (
-                <>
-                  <div
-                    className={cn(
-                      "text-2xl font-bold",
-                      isGain ? "text-green-600" : "text-red-600"
-                    )}
-                  >
-                    <AnimatedNumber
-                      value={summary.totalGainLoss}
-                      format="currency"
-                    />
-                  </div>
-                  <div
-                    className={cn(
-                      "text-lg font-medium ml-2",
-                      isGain ? "text-green-600" : "text-red-600"
-                    )}
-                  >
-                    <AnimatedNumber
-                      value={summary.gainLossPercentage}
-                      format="percentage"
-                      decimals={2}
-                    />
-                  </div>
-                </>
-              )}
+              <div
+                className={cn(
+                  "text-2xl font-bold",
+                  isGain ? "text-green-600" : "text-red-600"
+                )}
+              >
+                <AnimatedNumber
+                  value={summary.totalGainLoss}
+                  format="currency"
+                />
+              </div>
+              <div
+                className={cn(
+                  "text-lg font-medium ml-2",
+                  isGain ? "text-green-600" : "text-red-600"
+                )}
+              >
+                <AnimatedNumber
+                  value={summary.gainLossPercentage}
+                  format="percentage"
+                  decimals={2}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -130,12 +138,7 @@ export const PortfolioSummaryCard = ({
               />
             </div>
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
-              {lastUpdated?.toLocaleDateString?.("en-IN")},{" "}
-              {lastUpdated?.toLocaleTimeString?.("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
+              {formattedDateTime || (lastUpdated ? "Loading..." : "N/A")}
             </div>
           </div>
         </CardContent>

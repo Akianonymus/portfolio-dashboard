@@ -9,13 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStaticPortfolio } from "@/hooks/useStaticPortfolio";
 import { useDynamicData } from "@/hooks/useDynamicData";
 import { cn } from "@/lib/utils";
-import { Building2, RefreshCw, Table, Database } from "lucide-react";
+import { Building2, RefreshCw, Table, Database, Clock } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const { setTheme } = useTheme();
+  const [timeUntilRefresh, setTimeUntilRefresh] = useState(15);
 
   const {
     holdings: staticHoldings,
@@ -40,6 +41,8 @@ export default function Home() {
     isUpdating: isDynamicUpdating,
     error: dynamicError,
     refreshDynamicData,
+    stockLoadingStates,
+    allStocksCompleted,
   } = useDynamicData(stockNames);
 
   // Use dynamic data if available, otherwise fall back to static data
@@ -63,13 +66,38 @@ export default function Home() {
   const isLoading =
     isStaticLoading || (isDynamicLoading && stockNames.length > 0);
   const isUpdating = isDynamicUpdating;
-  const error = staticError || dynamicError;
   const hasDynamicData = dynamicHoldings.length > 0;
+
+  // Timer for auto-refresh countdown
+  useEffect(() => {
+    if (!hasDynamicData || !allStocksCompleted) return;
+
+    const interval = setInterval(() => {
+      setTimeUntilRefresh((prev) => {
+        if (prev <= 1) {
+          // Trigger refetch when timer reaches zero
+          refreshDynamicData();
+          return 15; // Reset to 15 seconds
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [hasDynamicData, allStocksCompleted, refreshDynamicData]);
+
+  // Reset timer when all stocks complete
+  useEffect(() => {
+    if (allStocksCompleted && hasDynamicData) {
+      setTimeUntilRefresh(15);
+    }
+  }, [allStocksCompleted, hasDynamicData]);
 
   // Refresh function
   const refreshPortfolio = () => {
     refreshStaticPortfolio();
     refreshDynamicData();
+    setTimeUntilRefresh(15); // Reset timer on manual refresh
   };
 
   useEffect(() => {
@@ -143,6 +171,7 @@ export default function Home() {
                   isUpdating={isUpdating}
                   isDynamicDataLoading={isDynamicLoading}
                   hasDynamicData={hasDynamicData}
+                  stockLoadingStates={stockLoadingStates}
                 />
               </TabsContent>
 
@@ -179,10 +208,15 @@ export default function Home() {
                 <span className="text-xs font-medium">
                   {isUpdating
                     ? "Updating..."
+                    : hasDynamicData && allStocksCompleted
+                    ? `Live Data (${timeUntilRefresh}s)`
                     : hasDynamicData
-                    ? "Live Data"
+                    ? "Loading..."
                     : "Static Data"}
                 </span>
+                {hasDynamicData && allStocksCompleted && !isUpdating && (
+                  <Clock className="h-3 w-3" />
+                )}
               </div>
             </div>
           </div>

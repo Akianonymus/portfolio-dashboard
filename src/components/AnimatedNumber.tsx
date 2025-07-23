@@ -60,9 +60,16 @@ export const AnimatedNumber = ({
 }: AnimatedNumberProps) => {
   const [displayValue, setDisplayValue] = useState(0);
   const animationRef = useRef<number | undefined>(undefined);
+  const previousValueRef = useRef<number>(value);
 
   useEffect(() => {
-    const startValue = 0;
+    // Only animate if the value has changed
+    if (previousValueRef.current === value) {
+      setDisplayValue(value);
+      return;
+    }
+
+    const startValue = previousValueRef.current;
     const endValue = value;
     const startTime = performance.now();
 
@@ -83,6 +90,9 @@ export const AnimatedNumber = ({
     };
 
     animationRef.current = requestAnimationFrame(animate);
+
+    // Update the previous value reference
+    previousValueRef.current = value;
 
     return () => {
       if (animationRef.current) {
