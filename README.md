@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dynamic Portfolio Dashboard
 
-## Getting Started
+A real-time portfolio management dashboard built with Next.js, TypeScript, and Tailwind CSS that fetches live stock data from Yahoo Finance and Google Finance APIs.
 
-First, run the development server:
+## Features
+
+- **Real-time Stock Data**: Fetches current market prices from Yahoo Finance
+- **Financial Metrics**: Retrieves P/E ratios and earnings data from Google Finance
+- **Dynamic Updates**: Auto-refreshes data every 15 seconds
+- **Sector Grouping**: Organizes stocks by sector with summary statistics
+- **Interactive UI**: Modern, responsive design with dark/light theme support
+- **Error Handling**: Graceful handling of API failures and rate limits
+- **Performance Optimized**: Caching and memoization for better performance
+
+## Technology Stack
+
+- **Frontend**: Next.js 15.4.2, React 19.1.0, TypeScript
+- **Styling**: Tailwind CSS 4, Radix UI components
+- **Data Fetching**: TanStack Query (React Query)
+- **APIs**: Yahoo Finance (unofficial), Google Finance (web scraping)
+- **Build Tool**: Turbopack
+
+## Prerequisites
+
+- Node.js 18+
+- Yarn package manager
+
+## Installation
+
+1. Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Akianonymus/portfolio-dashboard
+cd portfolio-dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Start the development server:
 
-## Learn More
+```bash
+yarn dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   └── portfolio/
+│   │       ├── static/    # Static portfolio data endpoint
+│   │       └── dynamic/   # Dynamic data with live prices
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Main dashboard page
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   ├── PortfolioTable.tsx # Main portfolio table
+│   ├── SectorGrouping.tsx # Sector-wise grouping
+│   └── PortfolioSummaryCard.tsx # Portfolio summary
+├── data/                 # Static data
+│   └── portfolioData.ts  # Portfolio holdings data
+├── hooks/                # Custom React hooks
+│   ├── useDynamicData.ts # Dynamic data fetching
+│   └── useStaticPortfolio.ts # Static data fetching
+├── lib/                  # Utility libraries
+│   └── services/         # API services
+│       ├── api.ts        # API client
+│       ├── finance.ts    # Finance service orchestrator
+│       ├── yahooFinance.ts # Yahoo Finance integration
+│       └── googleFinance.ts # Google Finance scraping
+└── types/                # TypeScript type definitions
+    └── portfolio.ts      # Portfolio-related types
+```
 
-## Deploy on Vercel
+## API Endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `GET /api/portfolio/static` - Returns static portfolio data without external API calls
+- `GET /api/portfolio/dynamic?stocks=stock1,stock2` - Returns portfolio data with live prices and financial metrics
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Configuration
+
+### Environment Variables
+
+No environment variables are required for basic functionality. The application uses public APIs and web scraping.
+
+### Customization
+
+To modify the portfolio data, edit `src/data/portfolioData.ts`:
+
+```typescript
+export const portfolioData: PortfolioHoldingData[] = [
+  {
+    id: "1",
+    name: "Stock Name",
+    sector: "Sector Name",
+    purchasePrice: 100.0,
+    quantity: 10,
+  },
+  // Add more stocks...
+];
+```
+
+## Available Scripts
+
+- `yarn dev` - Start development server with Turbopack
+- `yarn build` - Build for production
+- `yarn start` - Start production server
+- `yarn lint` - Run ESLint
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Deploy automatically
+
+### Other Platforms
+
+The application can be deployed to any platform that supports Next.js:
+
+```bash
+yarn build
+yarn start
+```
+
+## Technical Documentation
+
+For detailed technical information including:
+
+- System architecture and data flow
+- API specifications and implementation details
+- Technical challenges and solutions
+- Performance optimizations and security considerations
+
+See [Technical Documentation](doc.md)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **API Rate Limits**: If you encounter rate limit errors, the app will retry automatically
+2. **Data Not Loading**: Check browser console for error messages
+3. **Build Errors**: Ensure all dependencies are installed with `yarn install`
+
+### Debug Mode
+
+Enable debug logging by checking browser console for detailed error messages and API response logs.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is for educational purposes. Please respect the terms of service for Yahoo Finance and Google Finance when using this application.
