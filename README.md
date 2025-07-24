@@ -1,5 +1,8 @@
 # Dynamic Portfolio Dashboard
 
+<img alt="image" src="https://github.com/user-attachments/assets/7dbaca53-6002-4ab9-8005-f3fc5d055b0e" />
+
+
 A real-time portfolio management dashboard built with Next.js, TypeScript, and Tailwind CSS that fetches live stock data from Yahoo Finance and Google Finance APIs.
 
 ## Features
